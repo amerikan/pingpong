@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ping Pong</title>
+        <style type="text/css">
+            * {
+                margin: 0;
+                padding: 0;
+            }
+
+            html, body {
+                height: 100%;
+                width: 100%;
+            }
+
+            #arena {
+                background: #000;
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="arena"></canvas>
+
+        <audio preload="true" id="collide">
+            <source src="sounds/blop.wav" />
+            <source src="sounds/blop.mp3" />
+        </audio>
+
+        <audio preload="true" id="explode">
+            <source src="sounds/shotgun.mp3" />
+        </audio>
+
+        <script type="text/javascript">
+
+            var canvas = document.getElementById('arena');
+            var ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Sound
+            var paddleCollision = document.getElementById("collide");
+            var explode = document.getElementById("explode");
+
+            // Ball
+            function Ball() {
+                this.acceleration = 5;
+                this.maxAcceleration = 15;
+
+                this.radius = 15;
+
+                this.dy = this.acceleration;
+                this.y = Math.random() * (canvas.height - this.radius) + this.radius;
+
+                this.dx = this.acceleration;
+                this.x = Math.random() * (canvas.width - this.radius) + this.radius;
+
+                this.draw = function () {
+
+                    // Bottom/Top wall collisions
+                    if (canvas.height < this.y + this.radius) {
+
+                        //Paddle collision
+                        if (Paddle.x < this.x && (Paddle.x + Paddle.width) > this.x) {
+
+                            paddleCollision.play();
+                            score++;
+
+                        } else {
+                            explode.play();
+                            score = 0;
+                        }
+
+                        if (this.acceleration < this.maxAcceleration)
+                            this.acceleration++;
+
+                        this.dy = -this.acceleration;
+
+                    } else if (this.y < this.radius) {
+
+                        if (this.acceleration < this.maxAcceleration)
+                            this.acceleration++;
+
+                        this.dy = this.acceleration;               
+                    }
+
+                    // Left/Right wall collisions
+                    if (canvas.width < this.x + this.radius) {
+                        if (this.acceleration < this.maxAcceleration)
+                            this.acceleration++;
+
+                        this.dx = -this.acceleration;
+
+                    } else if (this.x < this.radius) {
+                        if (this.acceleration < this.maxAcceleration)
+                            this.acceleration++;
+
+                        this.dx = this.acceleration;
+                    }
+
+                    this.y += this.dy;
+                    this.x += this.dx;
+
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+                    ctx.fillStyle = "#ffffff";
+
+                    ctx.closePath();
+                    ctx.fill();
+                };
+            }
+
+            // Paddle
+            function Paddle() {
+                this.width = 200;
+                this.height = 20;
+                this.x = 0;
+                this.y = canvas.height - this.height;
+
+                this.draw = function (event) {
+                    ctx.beginPath();
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.closePath();
+                };
+            }
+
+            var Paddle = new Paddle();
+            var Ball = new Ball();
+
+            var score = 0;
+            var timer = setInterval(render, 1000 / 60);
+
+            canvas.onmousemove = function (event) {
+                Paddle.x = (event.clientX + Paddle.width > canvas.width) ? canvas.width - Paddle.width: event.clientX;
+            };
+
+            function drawScoreBox() {
+                ctx.font = "20px Helvetica";
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText("Score: " + score, 10, 50);
+            }
+
+            function drawGameOverButton() {
+                ctx.font = "20px Helvetica";
+                ctx.fillStyle = "#ffffff";
+                ctx.fillText("Game Over, Score " + score, 500, 400);
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
+            }
+
+            function clearCanvas() {
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+            }
+
+            function render() {
+                clearCanvas();
+                Paddle.draw();
+                Ball.draw();
+                drawScoreBox();
+            }
+
+        </script>
+    </body>
+</html>
